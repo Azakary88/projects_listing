@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Project Listing</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/web3/1.5.0/web3.min.js"></script>
+    <script type="module" src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.0.7/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</head>
+<body>
+    <!-- En-tête -->
+    <header>
+        <h1>Bienvenue sur la plateforme de référencement de projets</h1>
+        <nav>
+            <ul>
+                <li><a href="{{ url_for('projects_bp.add_project') }}">Ajout de Projet</a></li>
+                <li><a href="{{ url_for('projects_bp.list_projects') }}">La liste des Projets</a></li>
+                <li><a href="{{ url_for('votes_bp.vote') }}">Vote pour un projet</a></li>
+                <li><a href="{{ url_for('votes_bp.refund') }}">Remboursement</a></li>
+                <li><a href="/blockchain-news">Voir les Actualités Blockchain</a></li> 
+            </ul>
+        </nav>
+    </header>
+
+    <!-- Contenu principal -->
+    <main>
+        <h2>Découvrez nos projets récents et participez à leur succès !</h2>
+        <div class="content-layout">
+            <!-- Section pour les boutons de vote et de remboursement -->
+            <div class="icon-grid">
+                <div class="main-content">
+                    <a href="{{ url_for('votes_bp.vote') }}" class="btn-vote">
+                        <i class="fas fa-vote-yea"></i> Voter pour un projet
+                    </a>
+                </div>
+                <div class="main-content">
+                    <a href="/votes/refund" class="btn-refund">
+                        <i class="fas fa-undo-alt"></i> Demander un remboursement
+                    </a>
+                </div>
+            </div>
+    
+            <!-- Section pour le carrousel des publicités -->
+            <div class="carousel-section">
+                <div id="adCarousel" class="carousel slide" data-ride="carousel">
+                    <div class="carousel-inner">
+                        <div class="carousel-item active">
+                            <img src="static/image/transformation.jpg" class="d-block w-100" alt="Publicité 1">
+                        </div>
+                        <div class="carousel-item">
+                            <img src="static/image/bitcoin.jpg" class="d-block w-100" alt="Publicité 2">
+                        </div>
+                        <div class="carousel-item">
+                            <img src="static/image/cryptocurrency.jpg" class="d-block w-100" alt="Publicité 3">
+                        </div>
+                    </div>
+                    <a class="carousel-control-prev" href="#adCarousel" role="button" data-slide="prev">
+                        <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                        <span class="sr-only">Précédent</span>
+                    </a>
+                    <a class="carousel-control-next" href="#adCarousel" role="button" data-slide="next">
+                        <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                        <span class="sr-only">Suivant</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    
+        <!-- Fil d'actualité sur la blockchain -->
+        <div id="news-container">
+            <h2>Actualité Blockchain</h2>
+            <ul id="news-list"></ul>
+            <button id="load-more">Voir plus</button>
+        </div>
+        <div id="status-message"></div>
+    </main>
+
+    <!-- Pied de page -->
+    <footer>
+        <p>&copy; 2024 Groupe Batch2 Sujet3 Blockchain UVBF. Tous droits réservés.</p>
+        <p><a href="mailto:maigaabdoulaye420@gmail.com">Contactez-nous</a></p>
+    </footer>
+
+    <script>
+        let currentPage = 1;
+        const articlesPerPage = 5; // Nombre d'articles à afficher par page
+        let allArticles = [];
+
+        async function fetchNews() {
+            const apiKey = '2748f784fef848768ccb15c4e7c2e133';  // Remplacez par votre clé API
+            const url = `https://newsapi.org/v2/everything?q=blockchain&apiKey=${apiKey}`;
+
+            try {
+                const response = await fetch(url);
+                const data = await response.json();
+                allArticles = data.articles; // Stockez tous les articles pour un chargement ultérieur
+                displayArticles(); // Affiche les premiers articles
+            } catch (error) {
+                console.error('Erreur lors de la récupération des actualités:', error);
+            }
+        }
+
+        function displayArticles() {
+            const newsList = document.getElementById('news-list');
+            newsList.innerHTML = ''; // Vider la liste avant d'ajouter les articles
+
+            const start = (currentPage - 1) * articlesPerPage;
+            const end = start + articlesPerPage;
+            const articlesToDisplay = allArticles.slice(start, end);
+
+            articlesToDisplay.forEach(article => {
+                const listItem = document.createElement('li');
+                listItem.innerHTML = `<a href="${article.url}" target="_blank">${article.title}</a>`;
+                newsList.appendChild(listItem);
+            });
+
+            // Si tous les articles sont affichés, masquer le bouton "Voir plus"
+            if (end >= allArticles.length) {
+                document.getElementById('load-more').style.display = 'none';
+            }
+        }
+
+        document.getElementById('load-more').addEventListener('click', () => {
+            currentPage++;
+            displayArticles();
+        });
+
+        // Appeler la fonction pour récupérer les nouvelles lorsque la page se charge
+        window.onload = fetchNews;
+
+        // Ajoutez la logique pour MetaMask
+        let web3;
+        let userAddress;
+
+        // Vérifiez si MetaMask est installé
+        if (typeof window.ethereum !== 'undefined') {
+            console.log('MetaMask est installé!');
+        } else {
+            document.getElementById('status-message').innerText = "MetaMask n'est pas installé. Veuillez l'installer pour continuer.";
+        }
+
+        // Connexion à MetaMask
+        async function connectWallet() {
+            if (window.ethereum) {
+                try {
+                    const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+                    userAddress = accounts[0];
+                    web3 = new Web3(window.ethereum);
+                    document.getElementById('status-message').innerText = 'Wallet connecté avec succès: ' + userAddress;
+                } catch (error) {
+                    console.error('Erreur lors de la connexion:', error);
+                    document.getElementById('status-message').innerText = 'Erreur lors de la connexion au wallet.';
+                }
+            }
+        }
+
+        // Fonction pour ajouter un projet
+        async function addProject() {
+            if (!userAddress) {
+                alert('Veuillez d\'abord connecter votre wallet.');
+                return;
+            }
+
+            const contractAddress = '0x9D09E43CA8c7c3b676a67244200Eb1A45fa1bDeA';
+            const abi = await fetch('/static/js/ABI.json').then(response => response.json());
+            const contract = new web3.eth.Contract(abi, contractAddress);
+
+            const name = prompt('Entrez le nom du projet:');
+            const description = prompt('Entrez la description du projet:');
+            if (!name || !description) {
+                alert('Le nom et la description du projet sont requis.');
+                return;
+            }
+
+            try {
+                await contract.methods.addProject(name, description).send({ from: userAddress });
+                alert('Projet ajouté avec succès!');
+            } catch (error) {
+                console.error('Erreur lors de l\'ajout du projet:', error);
+                alert('Une erreur est survenue lors de l\'ajout du projet. Veuillez réessayer.');
+            }
+        }
+
+        // Ajouter les écouteurs d'événements
+        document.getElementById('connect-wallet').addEventListener('click', connectWallet);
+        document.getElementById('add-project').addEventListener('click', addProject);
+    </script>
+</body>
+</html>

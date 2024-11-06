@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ajouter un Projet</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <h1>Ajouter un nouveau Projet</h1>
+    <form id="projectForm" method="post">
+        <input type="text" id="name" name="name" placeholder="Nom du Projet" required>
+        <input type="text" id="description" name="description" placeholder="Description" required>
+        <input type="number" id="deadline" name="deadline" placeholder="Délai (en timestamp UNIX)" required>
+        <button type="submit">Ajouter</button>
+    </form>
+    <a href="{{ url_for('index') }}">Retour à l'accueil</a>
+    
+    <script>
+        document.getElementById('projectForm').addEventListener('submit', async function(event) {
+            event.preventDefault();
+
+            const name = document.getElementById('name').value;
+            const description = document.getElementById('description').value;
+            const deadline = parseInt(document.getElementById('deadline').value);
+
+            // Envoi des données à la route backend
+            const response = await fetch('/projects/add', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, description, deadline })
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                alert(data.message);
+                document.getElementById('projectForm').reset();
+            } else {
+                const error = await response.json();
+                alert('Erreur : ' + error.message);
+            }
+        });
+    </script>
+</body>
+</html>

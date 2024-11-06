@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vote pour le Projet</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/web3@1.6.0/dist/web3.min.js"></script>
+</head>
+<body>
+    <h1>Vote pour le Projet</h1>
+    <button id="connect-wallet">Connecter le wallet</button>
+
+    <form id="voteForm">
+        <label for="project_id">Sélectionnez le projet :</label>
+        <select id="project_id" required>
+            {% for project in projects %}
+            <option value="{{ project['id'] }}">{{ project['name'] }}</option>
+            {% endfor %}
+        </select>
+        <br>
+        <label for="amount">Montant pour voter :</label>
+        <input type="number" id="amount" required min="1">
+        <br>
+        <button type="submit">Vote</button>
+    </form>    
+
+    <h2>Liste des Projets</h2>
+    <ul id="project-list">
+        {% for project in projects %}
+        <li>
+            Nom: {{ project['name'] }}, Tokens Vendus: {{ project['totalTokensSold'] }}, Votes: {{ project['votes'] }}
+        </li>
+        {% endfor %}
+    </ul>
+
+    <a href="{{ url_for('index') }}">Retour à l'accueil</a>
+    <div id="projectList" class="project-list"></div>
+
+    <script>
+        let userAddress;
+        let contract;
+
+        // Fonction pour connecter le wallet
+        async function connectWallet() {
+            if (window.ethereum) {
+                try {
+                    await window.ethereum.request({ method: 'eth_requestAccounts' });
+                    const web3 = new Web3(window.ethereum);
+                    userAddress = (await web3.eth.getAccounts())[0];
+                    alert('Wallet connecté avec succès: ' + userAddress);
+
+                    // Chargement de l'ABI du contrat
+                    const contractABI = await fetch('/static/js/ABI.json').then(response => response.json());
+                    const contractAddress = "0x20A5FB55cF7bC7985EFD081d26004639A6F810f9"; 
+                    contract = new web3.eth.Contract(contractABI, contractAddress);
+                    console.log("Contrat chargé :", contract);
+
+                } catch (error) {
+                    console.error('Erreur lors de la connexion:', error);
+                    alert("Erreur lors de la connexion : " + error.message);
+                }
+            } else {
+                alert("MetaMask n'est pas installé.");
+            }
+        }
+
+        document.getElementById('connect-wallet').addEventListener('click', connectWallet);
+
+        document.getElementById('voteForm').addEventListener('submit', async function(event) {
+            event.preventDefault();
+
+            if (!userAddress || !contract) {
+                alert("Veuillez connecter votre wallet.");
+                return;
+            }
+            
+            const projectId = parseInt(document.getElementById('project_id').value);
+            const amount = parseInt(document.getElementById('amount').value);
+
+            console.log(`Tentative de vote pour le projet ${projectId} avec ${amount} tokens.`);
+
+            try {
+                const transactionParameters = {
+                    to: contract.options.address, 
+                    from: userAddress,
+                    data: contract.methods.vote(projectId, amount).encodeABI(),
+                    gas: '0xF4240', // Gas en format hexadécimal (1000000 en décimal)
+                };
+
+                console.log("Transaction parameters:", transactionParameters);
+
+                const txHash = await window.ethereum.request({
+                    method: 'eth_sendTransaction',
+                    params: [transactionParameters],
+                });
+
+                alert("Transaction en cours de traitement, veuillez patienter.");
+
+                let receipt = null;
+                while (!receipt) {
+                    receipt = await window.ethereum.request({
+                        method: 'eth_getTransactionReceipt',
+                        params: [txHash],
+                    });
+                    await new Promise(resolve => setTimeout(resolve, 2000));
+                }
+
+                if (receipt && receipt.status) {
+                    alert("Vote enregistré avec succès.");
+
+                    const response = await fetch('/votes/vote-list');
+                    if (response.ok) {
+                        const result = await response.json();
+                        updateProjectList(result.projects);
+                    } else {
+                        console.error("Erreur lors de la récupération de la liste des projets.");
+                    }
+                } else {
+                    alert("Échec de la transaction.");
+                }
+
+                // Réinitialise le formulaire après le vote
+                document.getElementById('voteForm').reset();
+
+            } catch (error) {
+                console.error("Erreur lors de l'exécution de la transaction :", error.message);
+                alert("Erreur lors de l'exécution de la transaction : " + error.message);
+            }
+        });
+
+        // Fonction pour mettre à jour la liste des projets
+        function updateProjectList(projects) {
+            const projectSelect = document.getElementById('project_id');
+            projectSelect.innerHTML = "";  // Vide la liste pour éviter les doublons
+
+            projects
+                .filter(project => project.isActive)  // Filtre les projets actifs seulement
+                .forEach(project => {
+                    const option = document.createElement('option');
+                    option.value = project.id;
+                    option.textContent = project.name;
+                    projectSelect.appendChild(option);
+                });
+
+            // Mettre à jour l'affichage de la liste ou du tableau de projets avec les votes
+            const projectListContainer = document.getElementById('projectList');
+            projectListContainer.innerHTML = "";  // Vider l'affichage avant d'ajouter les projets
+
+            const sortedProjects = projects.sort((a, b) => b.votes - a.votes);
+            
+            sortedProjects.forEach(project => {
+                const projectElement = document.createElement('div');
+                projectElement.textContent = `${project.name} - Votes: ${project.votes}`;
+                projectListContainer.appendChild(projectElement);
+            });
+        }
+        async function handleRefund(projectId) {
+            try {
+                // Check if the project exists
+                const project = await contract.methods.projects(projectId).call();
+                console.log("Projet trouvé :", project);
+
+                // If the project exists, proceed with the refund
+                await contract.methods.refund(projectId).send({ from: userAddress });
+                alert("Remboursement effectué avec succès.");
+
+                // Optionally, refresh the project list to show the updated status
+                const response = await fetch('/votes/vote-list');
+                if (response.ok) {
+                    const result = await response.json();
+                    updateProjectList(result.projects);
+                } else {
+                    console.error("Erreur lors de la récupération de la liste des projets.");
+                }
+
+            } catch (error) {
+                // Handle errors, including if the project doesn't exist
+                if (error.message.includes("Project does not exist")) {
+                    alert("Erreur : le projet avec cet ID n'existe pas.");
+                } else {
+                    console.error("Erreur lors du remboursement :", error.message);
+                    alert("Erreur lors du remboursement : " + error.message);
+                }
+            }
+        }
+    </script>
+</body>
+</html>
