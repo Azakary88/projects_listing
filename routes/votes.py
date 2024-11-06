@@ -120,12 +120,14 @@ def refund():
                 # Convertir l'ID du projet en entier
                 project_id = int(project_id)
                 
+                # Récupérer l'heure actuelle une seule fois
+                current_time = w3.eth.get_block('latest').timestamp
+                
                 # Vérification si le projet existe
                 project_data = contract.functions.projects(project_id).call()
                 
-                # Récupérer le délai du projet et l'heure actuelle
+                # Récupérer le délai du projet et le nombre de votes
                 deadline = project_data[6]
-                current_time = w3.eth.get_block('latest').timestamp
                 votes = project_data[3]  # Nombre de votes du projet
 
                 # Afficher les informations pour le débogage

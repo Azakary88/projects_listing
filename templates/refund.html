@@ -9,16 +9,32 @@
 <body>
     <a href="{{ url_for('index') }}">Retour à l'accueil</a>
     <h1>Demander un Remboursement</h1>
-
+    
     <!-- Afficher le message de confirmation ou d'erreur -->
     {% if message %}
         <p>{{ message }}</p>
     {% endif %}
-
+    
+    <!-- Liste des projets avec indicateur pour remboursement -->
+    <div class="project-list">
+        <h2>Projets Disponibles pour Remboursement</h2>
+        {% for project in projects %}
+            <div class="project-item {% if project.refundable %}text-danger{% endif %}">
+                <p>Projet ID: {{ project.id }} - {{ project.name }}</p>
+                {% if project.refundable %}
+                    <p>Ce projet est éligible pour remboursement</p>
+                {% else %}
+                    <p>Ce projet n'est pas éligible pour remboursement</p>
+                {% endif %}
+            </div>
+        {% endfor %}
+    </div>
+    
+    <!-- Formulaire de demande de remboursement -->
     <form action="/votes/refund" method="POST">
         <label for="projectId">ID du Projet :</label>
         <input type="number" id="projectId" name="projectId" required>
         <button type="submit">Demander un Remboursement</button>
-    </form>
+    </form>    
 </body>
 </html>

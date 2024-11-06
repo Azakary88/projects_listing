@@ -5,7 +5,7 @@ from web3 import Web3
 GANACHE_URL = "http://127.0.0.1:7545"
 
 # Adresse du contrat déployé sur la blockchain
-CONTRACT_ADDRESS = "0x20A5FB55cF7bC7985EFD081d26004639A6F810f9"
+CONTRACT_ADDRESS = "0x9A301686B9a5cBfCfEc20e250fA25B55E1cb7d01"
 
 # Adresse du propriétaire du contrat
 OWNER_ADDRESS = "0x419A88794A719245327f323f13afa32ac2B8f621"

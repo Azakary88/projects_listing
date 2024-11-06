@@ -132,33 +132,7 @@
         });
 
         // Appeler la fonction pour récupérer les nouvelles lorsque la page se charge
-        window.onload = fetchNews;
-
-        // Ajoutez la logique pour MetaMask
-        let web3;
-        let userAddress;
-
-        // Vérifiez si MetaMask est installé
-        if (typeof window.ethereum !== 'undefined') {
-            console.log('MetaMask est installé!');
-        } else {
-            document.getElementById('status-message').innerText = "MetaMask n'est pas installé. Veuillez l'installer pour continuer.";
-        }
-
-        // Connexion à MetaMask
-        async function connectWallet() {
-            if (window.ethereum) {
-                try {
-                    const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
-                    userAddress = accounts[0];
-                    web3 = new Web3(window.ethereum);
-                    document.getElementById('status-message').innerText = 'Wallet connecté avec succès: ' + userAddress;
-                } catch (error) {
-                    console.error('Erreur lors de la connexion:', error);
-                    document.getElementById('status-message').innerText = 'Erreur lors de la connexion au wallet.';
-                }
-            }
-        }
+        window.onload = fetchNews
 
         // Fonction pour ajouter un projet
         async function addProject() {

@@ -52,7 +52,7 @@
 
                     // Chargement de l'ABI du contrat
                     const contractABI = await fetch('/static/js/ABI.json').then(response => response.json());
-                    const contractAddress = "0x20A5FB55cF7bC7985EFD081d26004639A6F810f9"; 
+                    const contractAddress = "0x9A301686B9a5cBfCfEc20e250fA25B55E1cb7d01"; 
                     contract = new web3.eth.Contract(contractABI, contractAddress);
                     console.log("Contrat chargé :", contract);
 

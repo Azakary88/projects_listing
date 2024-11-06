@@ -84,7 +84,8 @@ contract ProjectListing {
         // Logique de remboursement
         project.votes = 0; // Réinitialiser le nombre de votes
         project.isActive = false; // Désactive le projet
-        // Effectuer le remboursement ici (par exemple, en transférant des fonds)
+        project.totalTokensSold = 0; // Réinitialise les tokens vendus
+        
     }
 
 
