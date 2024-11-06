@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Demande de Remboursement</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <a href="{{ url_for('index') }}">Retour à l'accueil</a>
+    <h1>Demander un Remboursement</h1>
+
+    <!-- Afficher le message de confirmation ou d'erreur -->
+    {% if message %}
+        <p>{{ message }}</p>
+    {% endif %}
+
+    <form action="/votes/refund" method="POST">
+        <label for="projectId">ID du Projet :</label>
+        <input type="number" id="projectId" name="projectId" required>
+        <button type="submit">Demander un Remboursement</button>
+    </form>
+</body>
+</html>

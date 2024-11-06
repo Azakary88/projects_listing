@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Actualités Blockchain</title>
+</head>
+<body>
+    <h1>Actualités sur la Blockchain</h1>
+    <ul>
+        {% if news %}
+            {% for article in news %}
+                <li>
+                    <a href="{{ article['url'] }}">{{ article['title'] }}</a>
+                    <p>{{ article['body'] }}</p>
+                    <p><small>{{ article['published_on'] }}</small></p> <!-- Utiliser la date formatée -->
+                </li>
+            {% endfor %}
+        {% else %}
+            <li>Aucune actualité trouvée.</li>
+        {% endif %}
+    </ul>    
+</body>
+</html>
